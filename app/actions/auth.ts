@@ -94,3 +94,16 @@ export async function login(state: FormState, formData: FormData) {
 
   redirect("/dashboard");
 }
+
+export async function logout() {
+  try {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URI}/logout`, {
+      method: "POST", // Changed to POST for semantic correctness
+      credentials: "include",
+    });
+  } catch (error) {
+    console.error("Failed to logout from backend:", error);
+  } finally {
+    redirect("/login");
+  }
+}

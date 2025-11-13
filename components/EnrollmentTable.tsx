@@ -37,16 +37,18 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "./ui/skeleton";
 
-export type Training = {
+export type Enrollment = {
   ID: number;
-  title: string;
-  description: string;
-  date: string;
-  duration: number;
-  instructor: string;
+  training: {
+    title: string;
+    date: string;
+    duration: number;
+    instructor: string;
+  };
+  enrolled_at: string;
 };
 
-export const columns: ColumnDef<Training>[] = [
+export const columns: ColumnDef<Enrollment>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -70,7 +72,8 @@ export const columns: ColumnDef<Training>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "title",
+    id: "training.title", // Explicitly set ID
+    accessorKey: "training.title",
     header: ({ column }) => {
       return (
         <Button
@@ -83,11 +86,12 @@ export const columns: ColumnDef<Training>[] = [
       );
     },
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("title")}</div>
+      <div className="capitalize">{row.original.training.title}</div>
     ),
   },
   {
-    accessorKey: "instructor",
+    id: "training.instructor", // Explicitly set ID
+    accessorKey: "training.instructor",
     header: ({ column }) => {
       return (
         <Button
@@ -99,10 +103,11 @@ export const columns: ColumnDef<Training>[] = [
         </Button>
       );
     },
-    cell: ({ row }) => <div>{row.getValue("instructor")}</div>,
+    cell: ({ row }) => <div>{row.original.training.instructor}</div>,
   },
   {
-    accessorKey: "date",
+    id: "training.date", // Explicitly set ID
+    accessorKey: "training.date",
     header: ({ column }) => {
       return (
         <Button
@@ -115,7 +120,7 @@ export const columns: ColumnDef<Training>[] = [
       );
     },
     cell: ({ row }) => {
-      const date = new Date(row.getValue("date"));
+      const date = new Date(row.original.training.date);
       const formatted = new Intl.DateTimeFormat("en-US", {
         day: "numeric",
         month: "long",
@@ -126,7 +131,8 @@ export const columns: ColumnDef<Training>[] = [
     },
   },
   {
-    accessorKey: "duration",
+    id: "training.duration", // Explicitly set ID
+    accessorKey: "training.duration",
     header: ({ column }) => {
       return (
         <Button
@@ -138,7 +144,26 @@ export const columns: ColumnDef<Training>[] = [
         </Button>
       );
     },
-    cell: ({ row }) => <div>{row.getValue("duration")} days</div>,
+    cell: ({ row }) => <div>{row.original.training.duration} days</div>,
+  },
+  {
+    accessorKey: "enrolled_at",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Enrolled At
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const date = new Date(row.getValue("enrolled_at"));
+      const formatted = date.toLocaleDateString();
+      return <div>{formatted}</div>;
+    },
   },
   {
     id: "actions",
@@ -173,8 +198,8 @@ export const columns: ColumnDef<Training>[] = [
   },
 ];
 
-export function TrainingsTable() {
-  const [data, setData] = React.useState<Training[]>([]);
+export function EnrollmentTable({ email = "" }: { email: string | unknown }) {
+  const [data, setData] = React.useState<Enrollment[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -187,8 +212,7 @@ export function TrainingsTable() {
   React.useEffect(() => {
     async function fetchTrainings() {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URI}/trainings`,
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URI}/enrollments/${email}`,
           {
             method: "GET",
             headers: {
@@ -211,7 +235,7 @@ export function TrainingsTable() {
     }
 
     fetchTrainings();
-  }, []);
+  }, [email]);
 
   const table = useReactTable({
     data,
@@ -281,9 +305,11 @@ export function TrainingsTable() {
       <div className="flex items-center py-4">
         <Input
           placeholder="Search by title..."
-          value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
+          value={
+            (table.getColumn("training.title")?.getFilterValue() as string) ?? ""
+          }
           onChange={(event) =>
-            table.getColumn("title")?.setFilterValue(event.target.value)
+            table.getColumn("training.title")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />

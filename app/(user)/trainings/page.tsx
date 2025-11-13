@@ -8,7 +8,7 @@ const UserTrainingsPage = () => {
         List of all available training programs in PT. Century Batteries
         Indonesia
       </p>
-      <TrainingsTable email="" />
+      <TrainingsTable />
     </div>
   );
 }

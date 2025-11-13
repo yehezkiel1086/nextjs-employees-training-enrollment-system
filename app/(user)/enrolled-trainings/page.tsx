@@ -1,6 +1,6 @@
-import { TrainingsTable } from "@/components/TrainingsTable"
 import { cookies } from "next/headers";
 import { decrypt } from "@/app/lib/session";
+import { EnrollmentTable } from "@/components/EnrollmentTable";
 
 const EnrolledTrainings = async () => {
   const cookie = (await cookies()).get("jwt_token")?.value;
@@ -12,9 +12,9 @@ const EnrolledTrainings = async () => {
     <div>
       <h1 className="text-3xl font-semibold">Enrolled Trainings</h1>
       <p>List of all of your enrolled training programs</p>
-      <TrainingsTable email={email} />
+      <EnrollmentTable email={email} />
     </div>
   );
 };
 
-export default EnrolledTrainings
+export default EnrolledTrainings;
