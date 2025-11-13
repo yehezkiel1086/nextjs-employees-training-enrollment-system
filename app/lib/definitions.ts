@@ -26,14 +26,25 @@ export const LoginFormSchema = z.object({
   }),
 });
  
+export const EnrollSchema = z.object({
+  email: z.string().email({
+    message: "Please enter a valid email address.",
+  }),
+  training_id: z
+    .number()
+    .int()
+    .positive({ message: "Training ID must be a positive integer." }),
+});
+
 export type FormState =
   | {
       errors?: {
-        name?: string[]
-        email?: string[]
-        password?: string[]
-        confirmPassword?: string[]
-      }
-      message?: string
+        name?: string[];
+        email?: string[];
+        password?: string[];
+        confirmPassword?: string[];
+        training_id?: string[];
+      };
+      message?: string;
     }
-  | undefined
+  | undefined;

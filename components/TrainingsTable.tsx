@@ -13,7 +13,24 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  Loader2,
+  MoreHorizontal,
+} from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -35,6 +52,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+// import { toast } from "sonner";
 import { Skeleton } from "./ui/skeleton";
 
 export type Training = {
@@ -46,134 +64,211 @@ export type Training = {
   instructor: string;
 };
 
-export const columns: ColumnDef<Training>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "title",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Title
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("title")}</div>
-    ),
-  },
-  {
-    accessorKey: "instructor",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Instructor
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => <div>{row.getValue("instructor")}</div>,
-  },
-  {
-    accessorKey: "date",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          <div className="text-right">Date</div>
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const date = new Date(row.getValue("date"));
-      const formatted = new Intl.DateTimeFormat("en-US", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }).format(date);
+import { enroll } from "@/app/actions/enroll";
 
-      return <div>{formatted}</div>;
-    },
-  },
-  {
-    accessorKey: "duration",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          <div className="text-right">Duration</div>
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => <div>{row.getValue("duration")} days</div>,
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const training = row.original;
+function EnrollTrainingAction({
+  email,
+  training,
+  children, // Add children prop for the AlertDialogTrigger
+}: {
+  email: string | unknown;
+  training: Training;
+  children: React.ReactNode; // Type for children
+}) {
+  const [state, action, pending] = useActionState(enroll, undefined);
 
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
+      <AlertDialogContent>
+        {pending ? (
+          <div className="flex flex-col gap-4">
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+            <div className="flex justify-end gap-2 mt-4">
+              <Skeleton className="h-10 w-20" />
+              <Skeleton className="h-10 w-24" />
+            </div>
+          </div>
+        ) : (
+          <>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Are you sure to enroll {training.title}?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                You will be enrolled to this training once you click "Continue".
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+              <form action={action}>
+                <input type="hidden" name="email" value={String(email)} />{" "}
+                {/* TODO: Replace with actual user email from session/context */}
+                <input type="hidden" name="training_id" value={training.ID} />
+                <AlertDialogAction type="submit" disabled={pending}>
+                  {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Continue
+                </AlertDialogAction>
+              </form>
+            </AlertDialogFooter>
+          </>
+        )}
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+export function TrainingsTable({
+  email: userEmail,
+}: {
+  email: string | unknown;
+}) {
+  // The email prop is now directly available as userEmail
+  const columns = React.useMemo<ColumnDef<Training>[]>(
+    () => [
+      {
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(!!value)
+            }
+            aria-label="Select all"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Select row"
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        accessorKey: "title",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
               onClick={() =>
-                navigator.clipboard.writeText(training.ID.toString())
+                column.toggleSorting(column.getIsSorted() === "asc")
               }
             >
-              Copy Training ID
-            </DropdownMenuItem>
-            <DropdownMenuItem>Enroll Training</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View details</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
-];
+              Title
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          );
+        },
+        cell: ({ row }) => (
+          <div className="capitalize">{row.getValue("title")}</div>
+        ),
+      },
+      {
+        accessorKey: "instructor",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Instructor
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{row.getValue("instructor")}</div>,
+      },
+      {
+        accessorKey: "date",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              <div className="text-right">Date</div>
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          );
+        },
+        cell: ({ row }) => {
+          const date = new Date(row.getValue("date"));
+          const formatted = new Intl.DateTimeFormat("en-US", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          }).format(date);
 
-export function TrainingsTable() {
+          return <div>{formatted}</div>;
+        },
+      },
+      {
+        accessorKey: "duration",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              <div className="text-right">Duration</div>
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{row.getValue("duration")} days</div>,
+      },
+      {
+        id: "actions",
+        enableHiding: false,
+        cell: ({ row }) => {
+          const training = row.original;
+
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Open menu</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem
+                  onClick={() =>
+                    navigator.clipboard.writeText(training.ID.toString())
+                  }
+                >
+                  Copy Training ID
+                </DropdownMenuItem>
+                <EnrollTrainingAction email={userEmail} training={training}>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    Enroll Training
+                  </DropdownMenuItem>
+                </EnrollTrainingAction>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>View details</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        },
+      },
+    ],
+    [userEmail]
+  );
+
   const [data, setData] = React.useState<Training[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -235,6 +330,51 @@ export function TrainingsTable() {
   if (loading) {
     return (
       <div className="w-full">
+        <div className="flex items-center justify-between py-4">
+          <Skeleton className="h-10 w-full max-w-sm" />
+          <Skeleton className="h-10 w-28" />
+        </div>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      <Skeleton className="h-6 w-full" />
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {Array.from({ length: 10 }).map((_, index) => (
+                <TableRow key={index}>
+                  {table.getAllColumns().map((column) => (
+                    <TableCell key={column.id}>
+                      <Skeleton className="h-6 w-full" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        <div className="flex items-center justify-end space-x-2 py-4">
+          <div className="flex-1">
+            <Skeleton className="h-6 w-32" />
+          </div>
+          <Skeleton className="h-10 w-24" />
+          <Skeleton className="h-10 w-24" />
+        </div>
+      </div>
+    );
+  }
+
+  // Remove the duplicate loading block
+  if (loading) {
+    return (
+      <div className="w-full">
         <div className="flex items-center py-4">
           <Skeleton className="h-10 w-full max-w-sm" />
           <Skeleton className="ml-auto h-10 w-28" />
@@ -242,13 +382,15 @@ export function TrainingsTable() {
         <div className="rounded-md border">
           <Table>
             <TableHeader>
-              <TableRow>
-                {Array.from({ length: columns.length }).map((_, index) => (
-                  <TableHead key={index}>
-                    <Skeleton className="h-6 w-full" />
-                  </TableHead>
-                ))}
-              </TableRow>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      <Skeleton className="h-6 w-full" />
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
             </TableHeader>
             <TableBody>
               {Array.from({ length: 10 }).map((_, index) => (
@@ -276,9 +418,10 @@ export function TrainingsTable() {
     );
   }
 
+  // Remove the duplicate input and dropdown menu for filtering/columns
   return (
     <div className="w-full">
-      <div className="flex items-center py-4">
+      <div className="flex items-center justify-between py-4">
         <Input
           placeholder="Search by title..."
           value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
@@ -289,7 +432,7 @@ export function TrainingsTable() {
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
+            <Button variant="outline">
               Columns <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
