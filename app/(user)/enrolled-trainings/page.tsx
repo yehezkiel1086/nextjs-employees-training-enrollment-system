@@ -1,11 +1,8 @@
-import { cookies } from "next/headers";
-import { decrypt } from "@/app/lib/session";
 import { EnrollmentTable } from "@/components/EnrollmentTable";
+import { verifySession } from "@/app/lib/dal";
 
 const EnrolledTrainings = async () => {
-  const cookie = (await cookies()).get("jwt_token")?.value;
-  const session = await decrypt(cookie);
-
+  const session = await verifySession();
   const email = session?.email;
 
   return (
