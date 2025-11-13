@@ -16,8 +16,6 @@ export default async function proxy(req: NextRequest) {
   const cookie = (await cookies()).get("jwt_token")?.value;
   const session = await decrypt(cookie);
 
-  console.log(session)
-
   const isAdmin = session?.role === 5150;
 
   // 4. Redirect to /login if the user is not authenticated

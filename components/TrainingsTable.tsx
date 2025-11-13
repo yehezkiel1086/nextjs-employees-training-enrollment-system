@@ -64,9 +64,9 @@ export type Training = {
   instructor: string;
 };
 
-import { enroll } from "@/app/actions/enroll";
 import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
+import { createTraining, updateTraining } from "@/app/actions/training";
 
 function EnrollTrainingAction({
   email,
@@ -79,7 +79,7 @@ function EnrollTrainingAction({
   training: Training;
   children: React.ReactNode; // Type for children
 }) {
-  const [state, action, pending] = useActionState(enroll, undefined);
+  const [state, action, pending] = useActionState(updateTraining, undefined);
 
   const isAdmin = role === 5150;
 
@@ -116,9 +116,14 @@ function EnrollTrainingAction({
                   ? `Edit Training ${training.ID}`
                   : `Are you sure to enroll ${training.title}?`}
               </AlertDialogTitle>
-              <div>
+              <form
+                id="update-training-form"
+                action={action}
+                className="flex flex-col gap-2"
+              >
+                <input type="hidden" name="id" value={training.ID} />
                 {isAdmin ? (
-                  <form className="flex flex-col gap-2">
+                  <>
                     <div>
                       <Label htmlFor="title">Title</Label>
                       <Input
@@ -178,29 +183,138 @@ function EnrollTrainingAction({
                         className="mt-1"
                       />
                     </div>
-                  </form>
+                  </>
                 ) : (
-                  <p>
-                    You will be enrolled to this training once you click
-                    "Continue".
-                  </p>
+                  <div>
+                    <input type="hidden" name="email" value={String(email)} />
+                    <input
+                      type="hidden"
+                      name="training_id"
+                      value={training.ID}
+                    />
+                    <p>
+                      You will be enrolled to this training once you click
+                      "Continue".
+                    </p>
+                  </div>
                 )}
-              </div>
+              </form>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
-              <form action={action}>
-                <input type="hidden" name="email" value={String(email)} />{" "}
-                {/* TODO: Replace with actual user email from session/context */}
-                <input type="hidden" name="training_id" value={training.ID} />
-                <AlertDialogAction type="submit" disabled={pending}>
-                  {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Continue
-                </AlertDialogAction>
-              </form>
+              <AlertDialogAction
+                type="submit"
+                form="update-training-form"
+                disabled={pending}
+              >
+                {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isAdmin ? "Save Changes" : "Continue"}
+              </AlertDialogAction>
             </AlertDialogFooter>
           </>
         )}
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function CreateTrainingAction({ children }: { children: React.ReactNode }) {
+  const [state, action, pending] = useActionState(createTraining, undefined);
+
+  const [trainingTitle, setTrainingTitle] = React.useState("");
+  const [trainingDescription, setTrainingDescription] = React.useState("");
+  const [trainingDate, setTrainingDate] = React.useState("");
+  const [trainingDuration, setTrainingDuration] = React.useState(0);
+  const [trainingInstructor, setTrainingInstructor] = React.useState("");
+
+  React.useEffect(() => {
+    console.log(trainingDate);
+  }, [trainingDate]);
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Create New Training</AlertDialogTitle>
+          <AlertDialogDescription>
+            Fill in the details below to create a new training.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <form
+          id="create-training-form"
+          action={action}
+          className="flex flex-col gap-2"
+        >
+          <div>
+            <Label htmlFor="title">Title</Label>
+            <Input
+              id="title"
+              name="title"
+              value={trainingTitle}
+              onChange={(e) => setTrainingTitle(e.target.value)}
+              placeholder="Training title"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              name="description"
+              value={trainingDescription}
+              onChange={(e) => setTrainingDescription(e.target.value)}
+              placeholder="Training description"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="date">Date</Label>
+            <Input
+              id="date"
+              name="date"
+              type="date"
+              value={trainingDate}
+              onChange={(e) => setTrainingDate(e.target.value)}
+              placeholder="Training date"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="duration">Duration (in days)</Label>
+            <Input
+              id="duration"
+              name="duration"
+              type="number"
+              value={trainingDuration}
+              onChange={(e) => setTrainingDuration(parseInt(e.target.value))}
+              placeholder="Training duration"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="instructor">Instructor</Label>
+            <Input
+              id="instructor"
+              name="instructor"
+              value={trainingInstructor}
+              onChange={(e) => setTrainingInstructor(e.target.value)}
+              placeholder="Training instructor"
+              className="mt-1"
+            />
+          </div>
+        </form>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            type="submit"
+            form="create-training-form"
+            disabled={pending}
+          >
+            {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Create
+          </AlertDialogAction>
+        </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
@@ -359,7 +473,7 @@ export function TrainingsTable({
         },
       },
     ],
-    [userEmail]
+    [userEmail, userRole]
   );
 
   const [data, setData] = React.useState<Training[]>([]);
@@ -464,54 +578,6 @@ export function TrainingsTable({
     );
   }
 
-  // Remove the duplicate loading block
-  if (loading) {
-    return (
-      <div className="w-full">
-        <div className="flex items-center py-4">
-          <Skeleton className="h-10 w-full max-w-sm" />
-          <Skeleton className="ml-auto h-10 w-28" />
-        </div>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      <Skeleton className="h-6 w-full" />
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {Array.from({ length: 10 }).map((_, index) => (
-                <TableRow key={index}>
-                  {Array.from({ length: columns.length }).map(
-                    (_, cellIndex) => (
-                      <TableCell key={cellIndex}>
-                        <Skeleton className="h-6 w-full" />
-                      </TableCell>
-                    )
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-        <div className="flex items-center justify-end space-x-2 py-4">
-          <div className="flex-1">
-            <Skeleton className="h-6 w-32" />
-          </div>
-          <Skeleton className="h-10 w-24" />
-          <Skeleton className="h-10 w-24" />
-        </div>
-      </div>
-    );
-  }
-
-  // Remove the duplicate input and dropdown menu for filtering/columns
   return (
     <div className="w-full">
       <div className="flex items-center justify-between py-4">
@@ -523,32 +589,40 @@ export function TrainingsTable({
           }
           className="max-w-sm"
         />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              Columns <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* right */}
+        <div className="flex gap-2">
+          {userRole === 5150 && (
+            <CreateTrainingAction>
+              <Button>Create Training</Button>
+            </CreateTrainingAction>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                Columns <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => {
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) =>
+                        column.toggleVisibility(!!value)
+                      }
+                    >
+                      {column.id}
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
       <div className="rounded-md border">
         <Table>
