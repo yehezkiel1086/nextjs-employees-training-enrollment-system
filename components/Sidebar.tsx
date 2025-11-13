@@ -1,12 +1,4 @@
-import {
-  Calendar,
-  Home,
-  Inbox,
-  LogOut,
-  Search,
-  Settings,
-  User,
-} from "lucide-react";
+import { Calendar, Home, Inbox, LogOut, User } from "lucide-react";
 
 import {
   Sidebar,
@@ -18,27 +10,30 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { verifySession } from "@/app/lib/dal";
 
-// Menu items.
-const items = [
+export async function UserSidebar() {
+  const session = await verifySession()
+
+  const items = [
   {
     title: "Dashboard",
-    url: "/dashboard",
+    url: `/${session.role === 5150? "admin": "user"}/dashboard`,
     icon: Home,
   },
   {
     title: "All Trainings",
-    url: "/trainings",
+    url: `/${session.role === 5150? "admin": "user"}/trainings`,
     icon: Inbox,
   },
   {
     title: "Enrolled Trainings",
-    url: "/enrolled-trainings",
+    url: `/${session.role === 5150? "admin": "user"}/enrolled-trainings`,
     icon: Calendar,
   },
   {
     title: "Profile",
-    url: "/profile",
+    url: `/${session.role === 5150? "admin": "user"}/profile`,
     icon: User,
   },
   {
@@ -48,12 +43,11 @@ const items = [
   },
 ];
 
-export function UserSidebar() {
   return (
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>User Dashboard</SidebarGroupLabel>
+          <SidebarGroupLabel>{session.role === 5150? "Admin": "User"} Dashboard</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (

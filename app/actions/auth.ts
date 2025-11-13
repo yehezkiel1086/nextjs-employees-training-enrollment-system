@@ -92,5 +92,5 @@ export async function login(state: FormState, formData: FormData) {
     };
   }
 
-  redirect("/dashboard");
+  redirect("/user/dashboard");
 }

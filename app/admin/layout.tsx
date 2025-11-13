@@ -1,5 +1,5 @@
 import { SidebarProvider } from "@/components/ui/sidebar"
-import { UserSidebar } from "@/components/UserSidebar"
+import { UserSidebar } from "@/components/Sidebar"
 
 export default function UserDashboardLayout({
   children,
