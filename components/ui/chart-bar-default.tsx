@@ -40,7 +40,7 @@ export function ChartBarDefault() {
   return (
     <Card className="w-1/2">
       <CardHeader>
-        <CardTitle>Bar Chart</CardTitle>
+        <CardTitle>Total Trainings Last 6 Months</CardTitle>
         <CardDescription>January - June 2024</CardDescription>
       </CardHeader>
       <CardContent>
@@ -71,5 +71,5 @@ export function ChartBarDefault() {
         </div>
       </CardFooter>
     </Card>
-  )
+  );
 }

@@ -188,7 +188,6 @@ export const columns: ColumnDef<Enrollment>[] = [
             >
               Copy Training ID
             </DropdownMenuItem>
-            <DropdownMenuItem>Enroll Training</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>View details</DropdownMenuItem>
           </DropdownMenuContent>
