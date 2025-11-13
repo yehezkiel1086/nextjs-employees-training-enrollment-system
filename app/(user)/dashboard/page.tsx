@@ -1,4 +1,5 @@
 "use client";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ChartBarDefault } from "@/components/ui/chart-bar-default";
 import {
   Card,
@@ -15,6 +16,7 @@ import { useEffect, useState } from "react";
 const UserDashboardPage = () => {
   const [trainingStatistics, SetTrainingStatistics] = useState({
     total: 0,
+    loading: true,
     enrolled: 0,
     completed: 0,
   });
@@ -34,13 +36,15 @@ const UserDashboardPage = () => {
 
       const data = await res.json();
 
-      SetTrainingStatistics({
+      SetTrainingStatistics((prevState) => ({
+        ...prevState,
         total: data.total_available_trainings,
         enrolled: data.enrolled_trainings,
         completed: data.completed_trainings,
-      });
+        loading: false,
+      }));
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -54,26 +58,70 @@ const UserDashboardPage = () => {
       <p>
         PT. Century Batteries Indonesia's Employees training enrollment system
       </p>
-      <div className="flex gap-4 mt-4">
-        <CountsCard
-          title="Total Trainings"
-          description="Total available trainings in PT. Century Batteries"
-          url="/trainings"
-          count={trainingStatistics.total}
-        />
-        <CountsCard
-          title="Enrolled Trainings"
-          description="Total training enrollments"
-          url="/enrolled-trainings"
-          count={trainingStatistics.enrolled}
-        />
-        <CountsCard
-          title="Completed Trainings"
-          description="Total trainings completed"
-          url="/enrolled-trainings"
-          count={trainingStatistics.completed}
-        />
-      </div>
+      {trainingStatistics.loading ? (
+        <div className="flex gap-4 mt-4">
+          <Card className="w-full gap-2">
+            <CardHeader>
+              <CardTitle>
+                <Skeleton className="h-6 w-1/2" />
+              </CardTitle>
+              <CardDescription>
+                <Skeleton className="h-4 w-3/4" />
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-12 w-1/4" />
+            </CardContent>
+          </Card>
+          <Card className="w-full gap-2">
+            <CardHeader>
+              <CardTitle>
+                <Skeleton className="h-6 w-1/2" />
+              </CardTitle>
+              <CardDescription>
+                <Skeleton className="h-4 w-3/4" />
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-12 w-1/4" />
+            </CardContent>
+          </Card>
+          <Card className="w-full gap-2">
+            <CardHeader>
+              <CardTitle>
+                <Skeleton className="h-6 w-1/2" />
+              </CardTitle>
+              <CardDescription>
+                <Skeleton className="h-4 w-3/4" />
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-12 w-1/4" />
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div className="flex gap-4 mt-4">
+          <CountsCard
+            title="Total Trainings"
+            description="Total available trainings in PT. Century Batteries"
+            url="/trainings"
+            count={trainingStatistics.total}
+          />
+          <CountsCard
+            title="Enrolled Trainings"
+            description="Total training enrollments"
+            url="/enrolled-trainings"
+            count={trainingStatistics.enrolled}
+          />
+          <CountsCard
+            title="Completed Trainings"
+            description="Total trainings completed"
+            url="/enrolled-trainings"
+            count={trainingStatistics.completed}
+          />
+        </div>
+      )}
       <div className="flex gap-4 mt-4">
         <ChartBarDefault />
         <ChartPieLabel />
