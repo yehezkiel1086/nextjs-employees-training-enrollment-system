@@ -65,17 +65,35 @@ export type Training = {
 };
 
 import { enroll } from "@/app/actions/enroll";
+import { Textarea } from "./ui/textarea";
+import { Label } from "./ui/label";
 
 function EnrollTrainingAction({
   email,
+  role,
   training,
   children, // Add children prop for the AlertDialogTrigger
 }: {
   email: string | unknown;
+  role: number | unknown;
   training: Training;
   children: React.ReactNode; // Type for children
 }) {
   const [state, action, pending] = useActionState(enroll, undefined);
+
+  const isAdmin = role === 5150;
+
+  const [trainingTitle, setTrainingTitle] = React.useState(training.title);
+  const [trainingDescription, setTrainingDescription] = React.useState(
+    training.description
+  );
+  const [trainingDate, setTrainingDate] = React.useState(training.date);
+  const [trainingDuration, setTrainingDuration] = React.useState(
+    training.duration
+  );
+  const [trainingInstructor, setTrainingInstructor] = React.useState(
+    training.instructor
+  );
 
   return (
     <AlertDialog>
@@ -94,11 +112,80 @@ function EnrollTrainingAction({
           <>
             <AlertDialogHeader>
               <AlertDialogTitle>
-                Are you sure to enroll {training.title}?
+                {isAdmin
+                  ? `Edit Training ${training.ID}`
+                  : `Are you sure to enroll ${training.title}?`}
               </AlertDialogTitle>
-              <AlertDialogDescription>
-                You will be enrolled to this training once you click "Continue".
-              </AlertDialogDescription>
+              <div>
+                {isAdmin ? (
+                  <form className="flex flex-col gap-2">
+                    <div>
+                      <Label htmlFor="title">Title</Label>
+                      <Input
+                        id="title"
+                        name="title"
+                        value={trainingTitle}
+                        onChange={(e) => setTrainingTitle(e.target.value)}
+                        placeholder="Training title"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        id="description"
+                        name="description"
+                        value={trainingDescription}
+                        onChange={(e) => setTrainingDescription(e.target.value)}
+                        placeholder="Training description"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="date">Date</Label>
+                      <Input
+                        id="date"
+                        name="date"
+                        type="date"
+                        value={trainingDate}
+                        onChange={(e) => setTrainingDate(e.target.value)}
+                        placeholder="Training date"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="duration">Duration</Label>
+                      <Input
+                        id="duration"
+                        name="duration"
+                        type="number"
+                        value={trainingDuration}
+                        onChange={(e) =>
+                          setTrainingDuration(parseInt(e.target.value))
+                        }
+                        placeholder="Training duration"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="instructor">Instructor</Label>
+                      <Input
+                        id="instructor"
+                        name="instructor"
+                        value={trainingInstructor}
+                        onChange={(e) => setTrainingInstructor(e.target.value)}
+                        placeholder="Training instructor"
+                        className="mt-1"
+                      />
+                    </div>
+                  </form>
+                ) : (
+                  <p>
+                    You will be enrolled to this training once you click
+                    "Continue".
+                  </p>
+                )}
+              </div>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
@@ -121,8 +208,10 @@ function EnrollTrainingAction({
 
 export function TrainingsTable({
   email: userEmail,
+  role: userRole,
 }: {
   email: string | unknown;
+  role: number | unknown;
 }) {
   // The email prop is now directly available as userEmail
   const columns = React.useMemo<ColumnDef<Training>[]>(
@@ -253,9 +342,13 @@ export function TrainingsTable({
                 >
                   Copy Training ID
                 </DropdownMenuItem>
-                <EnrollTrainingAction email={userEmail} training={training}>
+                <EnrollTrainingAction
+                  email={userEmail}
+                  role={userRole}
+                  training={training}
+                >
                   <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    Enroll Training
+                    {userRole === 5150 ? "Edit Training" : "Enroll Training"}
                   </DropdownMenuItem>
                 </EnrollTrainingAction>
                 <DropdownMenuSeparator />
