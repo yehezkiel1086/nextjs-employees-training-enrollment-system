@@ -1,11 +1,8 @@
-import { TrainingsTable } from "@/components/TrainingsTable";
+import { redirect } from "next/navigation";
 
-const DashboardPage = () => {
-  return (
-    <div>
-      <TrainingsTable />
-    </div>
-  );
+const HomePage = () => {
+  redirect("/dashboard");
+  return null;
 };
 
-export default DashboardPage;
+export default HomePage;

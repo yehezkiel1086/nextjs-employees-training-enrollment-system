@@ -15,7 +15,6 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
 
-  // loading state UI
   if (pending) {
     return (
       <div className="flex min-h-screen items-center justify-center">

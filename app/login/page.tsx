@@ -1,98 +1,96 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-
-const formSchema = z
-  .object({
-    name: z.string().min(2, {
-      message: "Name must be at least 2 characters.",
-    }),
-    email: z.string().email({
-      message: "Please enter a valid email address.",
-    }),
-    password: z.string().min(8, {
-      message: "Password must be at least 8 characters.",
-    }),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match.",
-    path: ["confirmPassword"],
-  });
+import { login } from "@/app/actions/auth";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function LoginPage() {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    },
-  });
+  const [state, action, pending] = useActionState(login, undefined);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // TODO: Implement your registration logic here.
-    // e.g., send data to your API endpoint.
-    console.log(values);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  if (pending) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="w-full max-w-md space-y-6 rounded-lg border p-8">
+          <div className="space-y-2 text-center">
+            <Skeleton className="mx-auto h-7 w-48" />
+            <Skeleton className="mx-auto h-5 w-64" />
+          </div>
+
+          <div className="mt-4">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-md space-y-8 rounded-lg border p-8">
+      <div className="w-full max-w-md space-y-6 rounded-lg border p-8">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Login Form</h1>
+          <h1 className="text-2xl font-bold">Login to your account</h1>
           <p className="text-muted-foreground">
-            Enter email and password to Login
+            Enter your email and password to login
           </p>
         </div>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="name@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+
+        <div className="mt-4">
+          <form action={action} className="space-y-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="example@email.com"
+              />
+              {state?.errors?.email && (
+                <p className="text-sm text-red-600">{state.errors.email}</p>
               )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="********" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="xxxxxxxx"
+              />
+              {state?.errors?.password && (
+                <p className="text-sm text-red-600">{state.errors.password}</p>
               )}
-            />
+            </div>
+            {state?.message && (
+              <p className="text-sm text-red-600">{state.message}</p>
+            )}
             <Button type="submit" className="w-full">
               Login
             </Button>
           </form>
-        </Form>
-        <p>Don&apos;t have an account? <a href="/register">Register</a></p>
+        </div>
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          Don't have an account? <a href="/register">Sign up</a>
+        </p>
       </div>
     </div>
   );
