@@ -45,159 +45,19 @@ export type Enrollment = {
     duration: number;
     instructor: string;
   };
+  user?: {
+    name: string;
+  };
   enrolled_at: string;
 };
 
-export const columns: ColumnDef<Enrollment>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    id: "training.title", // Explicitly set ID
-    accessorKey: "training.title",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Title
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => (
-      <div className="capitalize">{row.original.training.title}</div>
-    ),
-  },
-  {
-    id: "training.instructor", // Explicitly set ID
-    accessorKey: "training.instructor",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Instructor
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => <div>{row.original.training.instructor}</div>,
-  },
-  {
-    id: "training.date", // Explicitly set ID
-    accessorKey: "training.date",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          <div className="text-right">Date</div>
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const date = new Date(row.original.training.date);
-      const formatted = new Intl.DateTimeFormat("en-US", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }).format(date);
-
-      return <div>{formatted}</div>;
-    },
-  },
-  {
-    id: "training.duration", // Explicitly set ID
-    accessorKey: "training.duration",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          <div className="text-right">Duration</div>
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => <div>{row.original.training.duration} days</div>,
-  },
-  {
-    accessorKey: "enrolled_at",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Enrolled At
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const date = new Date(row.getValue("enrolled_at"));
-      const formatted = date.toLocaleDateString();
-      return <div>{formatted}</div>;
-    },
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const training = row.original;
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() =>
-                navigator.clipboard.writeText(training.ID.toString())
-              }
-            >
-              Copy Training ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View details</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
-];
-
-export function EnrollmentTable({ email = "" }: { email: string | unknown }) {
+export function EnrollmentTable({
+  email = "",
+  role = 2001,
+}: {
+  email: string | unknown;
+  role: number | unknown;
+}) {
   const [data, setData] = React.useState<Enrollment[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -208,10 +68,170 @@ export function EnrollmentTable({ email = "" }: { email: string | unknown }) {
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
+  const isAdmin = role === 5150;
+
+  const columns = React.useMemo<ColumnDef<Enrollment>[]>(() => {
+    const baseColumns: ColumnDef<Enrollment>[] = [
+      {
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(!!value)
+            }
+            aria-label="Select all"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Select row"
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        id: "training.title", // Explicitly set ID
+        accessorKey: "training.title",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Title
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          );
+        },
+        cell: ({ row }) => (
+          <div className="capitalize">{row.original.training.title}</div>
+        ),
+      },
+    ];
+
+    if (isAdmin) {
+      baseColumns.push({
+        id: "user.name",
+        accessorKey: "user.name",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            User
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        ),
+        cell: ({ row }) => <div>{row.original.user?.name}</div>,
+      });
+    }
+
+    baseColumns.push(
+      {
+        id: "training.instructor", // Explicitly set ID
+        accessorKey: "training.instructor",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Instructor
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{row.original.training.instructor}</div>,
+      },
+      {
+        id: "training.date", // Explicitly set ID
+        accessorKey: "training.date",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              <div className="text-right">Date</div>
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          );
+        },
+        cell: ({ row }) => {
+          const date = new Date(row.original.training.date);
+          const formatted = new Intl.DateTimeFormat("en-US", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          }).format(date);
+
+          return <div>{formatted}</div>;
+        },
+      },
+      {
+        id: "training.duration", // Explicitly set ID
+        accessorKey: "training.duration",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              <div className="text-right">Duration</div>
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{row.original.training.duration} days</div>,
+      },
+      {
+        accessorKey: "enrolled_at",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              Enrolled At
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          );
+        },
+        cell: ({ row }) => {
+          const date = new Date(row.getValue("enrolled_at"));
+          const formatted = date.toLocaleDateString();
+          return <div>{formatted}</div>;
+        },
+      }
+    );
+
+    return baseColumns;
+  }, [isAdmin]);
+
   React.useEffect(() => {
     async function fetchTrainings() {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URI}/enrollments/${email}`,
+        const response = await fetch(
+          isAdmin
+            ? `${process.env.NEXT_PUBLIC_API_URI}/enrollments`
+            : `${process.env.NEXT_PUBLIC_API_URI}/enrollments/${email}`,
           {
             method: "GET",
             headers: {
@@ -234,7 +254,7 @@ export function EnrollmentTable({ email = "" }: { email: string | unknown }) {
     }
 
     fetchTrainings();
-  }, [email]);
+  }, [email, isAdmin]);
 
   const table = useReactTable({
     data,
@@ -305,10 +325,13 @@ export function EnrollmentTable({ email = "" }: { email: string | unknown }) {
         <Input
           placeholder="Search by title..."
           value={
-            (table.getColumn("training.title")?.getFilterValue() as string) ?? ""
+            (table.getColumn("training.title")?.getFilterValue() as string) ??
+            ""
           }
           onChange={(event) =>
-            table.getColumn("training.title")?.setFilterValue(event.target.value)
+            table
+              .getColumn("training.title")
+              ?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />

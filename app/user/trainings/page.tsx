@@ -4,8 +4,6 @@ import { verifySession } from "@/app/lib/dal";
 const UserTrainingsPage = async () => {
   const session = await verifySession();
 
-  const email = session?.email;
-
   return (
     <div>
       <h1 className="text-3xl font-semibold">All Trainings</h1>
@@ -13,7 +11,7 @@ const UserTrainingsPage = async () => {
         List of all available training programs in PT. Century Batteries
         Indonesia
       </p>
-      <TrainingsTable email={email} />
+      <TrainingsTable email={session?.email} role={session?.role} />
     </div>
   );
 };
