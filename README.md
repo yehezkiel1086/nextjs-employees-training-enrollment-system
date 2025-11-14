@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Go Gin Employees Training Enrollment System
 
-## Getting Started
+> ❗⚠️ CATATAN PENTING: untuk akses dev environment, gunakan `127.0.0.1` bukan `localhost`
 
-First, run the development server:
+Go Backend: [https://github.com/yehezkiel1086/go-gin-employees-training-enrollment-system](https://github.com/yehezkiel1086/go-gin-employees-training-enrollment-system)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Sebuah aplikasi web *full-stack* sederhana untuk mengelola program pelatihan karyawan. Admin dapat membuat dan mengelola sesi pelatihan, sementara karyawan dapat menelusuri dan mendaftar untuk pelatihan.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Fitur Utama
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Manajemen Pengguna
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Terdapat peran **Karyawan** dan **Admin** yang datanya disimpan di dalam database.
+- Akses berbasis peran:
+    - **Admin:** Dapat melakukan operasi CRUD (Create, Read, Update, Delete) pada data pelatihan dan melihat semua data pendaftaran.
+    - **Karyawan:** Dapat melihat daftar pelatihan yang tersedia, mendaftar, dan membatalkan pendaftaran.
 
-## Learn More
+### Manajemen Pelatihan
 
-To learn more about Next.js, take a look at the following resources:
+- Operasi CRUD (Create, Read, Update, Delete) untuk data pelatihan.
+- Setiap data pelatihan memiliki informasi seperti: judul, deskripsi, tanggal, dan instruktur.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Pendaftaran
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Karyawan dapat mendaftar atau membatalkan pendaftaran pada sebuah pelatihan.
+- Setiap pendaftaran akan menghubungkan data pengguna (karyawan) dengan sesi pelatihan yang dipilih.
 
-## Deploy on Vercel
+### Autentikasi
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Proses registrasi dan login menggunakan **autentikasi JWT** yang ditangani oleh backend (Golang).
+- Rute yang terproteksi hanya bisa diakses dengan menyertakan *bearer token*.
+- Token disimpan di sisi frontend (Next.js) menggunakan *cookie* atau *localStorage*.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Teknologi yang Digunakan
+
+- **Backend:** Go (Gin Framework)
+- **Database:** PostgreSQL
+- **Caching:** Redis
+- **Containerization:** Docker
+
+## Cara Instalasi dan Menjalankan Proyek
+
+Proyek ini dijalankan menggunakan Docker. Pastikan Anda sudah menginstal Docker dan Docker Compose di sistem Anda.
+
+1.  **Clone repository ini:**
+    ```bash
+    git clone https://github.com/yehezkiel1086/nextjs-employees-training-enrollment-system
+    cd nextjs-employees-training-enrollment-system
+    ```
+
+2.  **Buat file `.env`:**
+    Salin file `.env.example` menjadi `.env` dan sesuaikan nilainya jika diperlukan.
+    ```bash
+    cp .env.example .env
+    ```
+    File `.env` Anda akan terlihat seperti ini:
+    ```env
+    APP_NAME=go-gin-employees-training-enrollment-system
+    APP_ENV=development
+
+    HTTP_HOST=127.0.0.1
+    HTTP_PORT=8080
+    HTTP_ALLOWED_ORIGINS=http://127.0.0.1:3000,http://localhost:3000
+    ```
+
+3.  **Install dan Jalankan**
+    ```bash
+    npm install
+    npm run dev
+    ```
