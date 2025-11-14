@@ -12,5 +12,11 @@ export const verifySession = async () => {
     redirect('/login')
   }
  
-  return { isAuth: true, email: session.email, role: session.role, jwt_token: cookie }
+  return {
+    isAuth: true,
+    email: session.email,
+    name: session.name,
+    role: session.role,
+    jwt_token: cookie,
+  };
 }
