@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 const HomePage = () => {
-  redirect("/dashboard");
+  redirect("/login");
   return null;
 };
 

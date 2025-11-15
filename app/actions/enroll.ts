@@ -29,7 +29,7 @@ export async function enroll(state: FormState, formData: FormData) {
           email,
           training_id,
         }),
-        credentials: "include"
+        credentials: "include",
       }
     );
 
@@ -45,5 +45,5 @@ export async function enroll(state: FormState, formData: FormData) {
     };
   }
 
-  redirect("/enrolled-trainings"); // Redirect to the user's enrolled trainings page
+  redirect("/user/enrolled-trainings");
 }

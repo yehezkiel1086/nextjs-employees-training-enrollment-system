@@ -50,6 +50,14 @@ export const TrainingFormSchema = z.object({
   instructor: z
     .string()
     .min(3, { message: "Instructor name must be at least 3 characters." }),
+  category_id: z.coerce
+    .number()
+    .int()
+    .positive({ message: "Category is required." }),
+});
+
+export const DeleteTrainingSchema = z.object({
+  id: z.coerce.number().int().positive(),
 });
 
 export type FormState =
@@ -62,8 +70,10 @@ export type FormState =
         training_id?: string[];
         description?: string[];
         date?: string[];
+        id?: string[];
         duration?: string[];
         instructor?: string[];
+        category_id?: string[];
       };
       message?: string;
     }

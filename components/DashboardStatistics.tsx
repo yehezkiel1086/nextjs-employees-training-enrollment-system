@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ChartBarDefault } from "@/components/ui/chart-bar-default";
 
 const DashboardStatistics = () => {
-  const [trainingStatistics, SetTrainingStatistics] = useState({
+  const [trainingStatistics, setTrainingStatistics] = useState({
     total: 0,
     loading: true,
     enrolled: 0,
@@ -38,7 +38,7 @@ const DashboardStatistics = () => {
 
       const data = await res.json();
 
-      SetTrainingStatistics((prevState) => ({
+      setTrainingStatistics((prevState) => ({
         ...prevState,
         total: data.total_available_trainings,
         enrolled: data.enrolled_trainings,
@@ -53,6 +53,12 @@ const DashboardStatistics = () => {
   useEffect(() => {
     getStatistics();
   }, []);
+
+  const barChartData = [
+    { name: "Available", count: trainingStatistics.total },
+    { name: "Enrolled", count: trainingStatistics.enrolled },
+    { name: "Completed", count: trainingStatistics.completed },
+  ];
 
   return (
     <>
@@ -121,11 +127,11 @@ const DashboardStatistics = () => {
         </div>
       )}
       <div className="flex gap-4 mt-4">
-        <ChartBarDefault />
+        <ChartBarDefault data={barChartData} />
         <ChartPieLabel />
       </div>
     </>
-  )
+  );
 }
 
 const CountsCard = ({

@@ -53,6 +53,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 // import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "./ui/skeleton";
 
 export type Training = {
@@ -62,37 +69,59 @@ export type Training = {
   date: string;
   duration: number;
   instructor: string;
+  category_id: number;
+};
+
+export type Category = {
+  id: number;
+  name: string;
 };
 
 import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
-import { createTraining, updateTraining } from "@/app/actions/training";
+import {
+  createTraining,
+  deleteTraining,
+  updateTraining,
+} from "@/app/actions/training";
+import { enroll } from "@/app/actions/enroll";
+import { FormState } from "@/app/lib/definitions";
 
 function EnrollTrainingAction({
   email,
   role,
   training,
-  children, // Add children prop for the AlertDialogTrigger
+  categories,
+  children,
 }: {
   email: string | unknown;
   role: number | unknown;
   training: Training;
-  children: React.ReactNode; // Type for children
+  categories: Category[];
+  children: React.ReactNode;
 }) {
-  const [state, action, pending] = useActionState(updateTraining, undefined);
-
+  type Action = (state: FormState, formData: FormData) => Promise<FormState>;
   const isAdmin = role === 5150;
+  const [state, action, pending] = useActionState(
+    (isAdmin ? updateTraining : enroll) as Action,
+    undefined
+  );
 
   const [trainingTitle, setTrainingTitle] = React.useState(training.title);
   const [trainingDescription, setTrainingDescription] = React.useState(
     training.description
   );
-  const [trainingDate, setTrainingDate] = React.useState(training.date);
+  const [trainingDate, setTrainingDate] = React.useState(
+    training.date ? new Date(training.date).toISOString().split("T")[0] : ""
+  );
   const [trainingDuration, setTrainingDuration] = React.useState(
     training.duration
   );
   const [trainingInstructor, setTrainingInstructor] = React.useState(
     training.instructor
+  );
+  const [trainingCategoryId, setTrainingCategoryId] = React.useState(
+    training.category_id
   );
 
   return (
@@ -183,6 +212,34 @@ function EnrollTrainingAction({
                         className="mt-1"
                       />
                     </div>
+                    <div>
+                      <Label htmlFor="category">Category</Label>
+                      <input
+                        type="hidden"
+                        name="category_id"
+                        value={trainingCategoryId}
+                      />
+                      <Select
+                        value={String(trainingCategoryId)}
+                        onValueChange={(value) =>
+                          setTrainingCategoryId(parseInt(value))
+                        }
+                      >
+                        <SelectTrigger className="w-full mt-1">
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem
+                              key={category.id}
+                              value={String(category.id)}
+                            >
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </>
                 ) : (
                   <div>
@@ -218,7 +275,13 @@ function EnrollTrainingAction({
   );
 }
 
-function CreateTrainingAction({ children }: { children: React.ReactNode }) {
+function CreateTrainingAction({
+  categories,
+  children,
+}: {
+  categories: Category[];
+  children: React.ReactNode;
+}) {
   const [state, action, pending] = useActionState(createTraining, undefined);
 
   const [trainingTitle, setTrainingTitle] = React.useState("");
@@ -226,10 +289,9 @@ function CreateTrainingAction({ children }: { children: React.ReactNode }) {
   const [trainingDate, setTrainingDate] = React.useState("");
   const [trainingDuration, setTrainingDuration] = React.useState(0);
   const [trainingInstructor, setTrainingInstructor] = React.useState("");
-
-  React.useEffect(() => {
-    console.log(trainingDate);
-  }, [trainingDate]);
+  const [trainingCategoryId, setTrainingCategoryId] = React.useState<
+    number | undefined
+  >(undefined);
 
   return (
     <AlertDialog>
@@ -303,6 +365,28 @@ function CreateTrainingAction({ children }: { children: React.ReactNode }) {
               className="mt-1"
             />
           </div>
+          <div>
+            <Label htmlFor="category">Category</Label>
+            <input
+              type="hidden"
+              name="category_id"
+              value={trainingCategoryId ?? ""}
+            />
+            <Select
+              onValueChange={(value) => setTrainingCategoryId(parseInt(value))}
+            >
+              <SelectTrigger className="w-full mt-1">
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={String(category.id)}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </form>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
@@ -320,6 +404,58 @@ function CreateTrainingAction({ children }: { children: React.ReactNode }) {
   );
 }
 
+function DeleteTrainingAction({
+  training,
+  children,
+}: {
+  training: Training;
+  children: React.ReactNode;
+}) {
+  const [state, action, pending] = useActionState(deleteTraining, undefined);
+
+  React.useEffect(() => {
+    if (state?.message && state.message !== "success") {
+      console.error(state.message);
+    }
+    if (state?.message === "success") {
+      window.location.reload();
+    }
+  }, [state]);
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete the "
+            <strong>{training.title}</strong>" training.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <form id="delete-training-form" action={action}>
+          <input type="hidden" name="id" value={training.ID} />
+        </form>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            type="submit"
+            form="delete-training-form"
+            disabled={pending}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {pending ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              "Delete"
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 export function TrainingsTable({
   email: userEmail,
   role: userRole,
@@ -327,6 +463,17 @@ export function TrainingsTable({
   email: string | unknown;
   role: number | unknown;
 }) {
+  const [categories, setCategories] = React.useState<Category[]>([]);
+  const [data, setData] = React.useState<Training[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = React.useState({});
+
   // The email prop is now directly available as userEmail
   const columns = React.useMemo<ColumnDef<Training>[]>(
     () => [
@@ -459,12 +606,20 @@ export function TrainingsTable({
                 <EnrollTrainingAction
                   email={userEmail}
                   role={userRole}
+                  categories={categories}
                   training={training}
                 >
                   <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                     {userRole === 5150 ? "Edit Training" : "Enroll Training"}
                   </DropdownMenuItem>
                 </EnrollTrainingAction>
+                {userRole === 5150 && (
+                  <DeleteTrainingAction training={training}>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                      Delete Training
+                    </DropdownMenuItem>
+                  </DeleteTrainingAction>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>View details</DropdownMenuItem>
               </DropdownMenuContent>
@@ -473,37 +628,34 @@ export function TrainingsTable({
         },
       },
     ],
-    [userEmail, userRole]
+    [userEmail, userRole, categories]
   );
-
-  const [data, setData] = React.useState<Training[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
 
   React.useEffect(() => {
-    async function fetchTrainings() {
+    async function fetchData() {
+      setLoading(true);
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URI}/trainings`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
+        const [trainingsResponse, categoriesResponse] = await Promise.all([
+          fetch(`${process.env.NEXT_PUBLIC_API_URI}/trainings`, {
             credentials: "include",
-          }
-        );
-        if (!response.ok) {
-          throw new Error("Failed to fetch trainings");
+          }),
+          fetch(`${process.env.NEXT_PUBLIC_API_URI}/categories`, {
+            credentials: "include",
+          }),
+        ]);
+
+        if (!trainingsResponse.ok) {
+          throw new Error("Failed to fetch trainings.");
         }
-        const trainings = await response.json();
+        if (!categoriesResponse.ok) {
+          throw new Error("Failed to fetch categories.");
+        }
+
+        const trainings = await trainingsResponse.json();
+        const categoriesData = await categoriesResponse.json();
+
         setData(trainings);
+        setCategories(categoriesData);
       } catch (error) {
         console.error(error);
         // TODO: Handle error state in UI
@@ -512,7 +664,7 @@ export function TrainingsTable({
       }
     }
 
-    fetchTrainings();
+    fetchData();
   }, []);
 
   const table = useReactTable({
@@ -592,7 +744,7 @@ export function TrainingsTable({
         {/* right */}
         <div className="flex gap-2">
           {userRole === 5150 && (
-            <CreateTrainingAction>
+            <CreateTrainingAction categories={categories}>
               <Button>Create Training</Button>
             </CreateTrainingAction>
           )}
